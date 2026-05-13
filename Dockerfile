@@ -42,6 +42,12 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 # Fix lỗi ký tự xuống dòng (CRLF) nếu code được viết trên Windows
 RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh
 
+# Final MPM assert after all COPYs (image is immutable at runtime; entrypoint also re-asserts).
+RUN (a2dismod mpm_event 2>/dev/null || true) \
+    && (a2dismod mpm_worker 2>/dev/null || true) \
+    && a2enmod mpm_prefork \
+    && apache2ctl -t
+
 # 8. KHỞI ĐỘNG
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["apache2-foreground"]

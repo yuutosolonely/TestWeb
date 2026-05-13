@@ -23,4 +23,13 @@ php artisan migrate --force
 # Create storage link
 php artisan storage:link --force
 
+# mod_php (php:apache) requires mpm_prefork. apt/docker-php layers can leave mpm_event
+# enabled as well, which causes AH00534 and a brief failed start on deploy/restart.
+# Re-assert a single MPM on every container start before Apache binds the port.
+for _mpm in mpm_event mpm_worker; do
+    a2dismod "$_mpm" 2>/dev/null || true
+done
+a2enmod mpm_prefork 2>/dev/null || true
+apache2ctl -t
+
 exec "$@"
