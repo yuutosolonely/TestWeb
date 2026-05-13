@@ -20,14 +20,20 @@ if [ ! -f ".env" ]; then
     php artisan key:generate
 fi
 
-# Run migrations
-php artisan migrate --force
+# Run migrations only when explicitly enabled.
+# This prevents container boot failure (and Railway 502) when DB is temporarily unavailable.
+if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
+    echo "🗄️ RUN_MIGRATIONS=true, running database migrations..."
+    php artisan migrate --force
+else
+    echo "⏭️ Skipping migrations (set RUN_MIGRATIONS=true to enable)."
+fi
 
 # Seed data if needed (optional, uncomment if you want to seed on every start if tables are empty)
 # php artisan db:seed --force
 
-# Create storage link
-php artisan storage:link --force
+# Create storage link; do not fail startup if it already exists or filesystem is read-only.
+php artisan storage:link --force || true
 
 # mod_php (php:apache) requires mpm_prefork. apt/docker-php layers can leave mpm_event
 # enabled as well, which causes AH00534 and a brief failed start on deploy/restart.

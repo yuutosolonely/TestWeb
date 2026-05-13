@@ -26,6 +26,8 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # 3. THIẾT LẬP THƯ MỤC LÀM VIỆC & COPY CODE
 WORKDIR /var/www/html
 COPY . .
+ENV COMPOSER_ALLOW_SUPERUSER=1
+RUN composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
 
 # 4. PHÂN QUYỀN CHO THƯ MỤC STORAGE VÀ CACHE
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
