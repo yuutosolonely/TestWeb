@@ -2,6 +2,12 @@
 echo "🚀 Docker Entrypoint script starting..."
 set -e
 
+# Railway injects PORT dynamically; Apache must listen on it.
+APP_PORT="${PORT:-80}"
+echo "🌐 Configuring Apache to listen on port ${APP_PORT}"
+sed -ri "s/^Listen [0-9]+/Listen ${APP_PORT}/" /etc/apache2/ports.conf
+sed -ri "s/<VirtualHost \*:[0-9]+>/<VirtualHost *:${APP_PORT}>/" /etc/apache2/sites-available/000-default.conf
+
 # Install composer dependencies if autoload.php doesn't exist
 if [ ! -f "vendor/autoload.php" ]; then
     echo "📦 Installing composer dependencies..."
