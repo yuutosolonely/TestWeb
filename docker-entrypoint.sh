@@ -24,13 +24,18 @@ fi
 # This prevents container boot failure (and Railway 502) when DB is temporarily unavailable.
 if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
     echo "🗄️ RUN_MIGRATIONS=true, running database migrations..."
-    php artisan migrate --force
+    # Wait for database to be ready (max 30 seconds)
+    for i in $(seq 1 30); do
+        php artisan migrate:status > /dev/null 2>&1 && break
+        echo "⏳ Waiting for database... ($i/30)"
+        sleep 1
+    done
+    php artisan migrate --force || echo "⚠️ Migration failed, continuing..."
+    # Seed demo accounts if users table is empty
+    php artisan db:seed --force || echo "⚠️ Seeding skipped."
 else
     echo "⏭️ Skipping migrations (set RUN_MIGRATIONS=true to enable)."
 fi
-
-# Seed data if needed (optional, uncomment if you want to seed on every start if tables are empty)
-# php artisan db:seed --force
 
 # Create storage link; do not fail startup if it already exists or filesystem is read-only.
 php artisan storage:link --force || true
