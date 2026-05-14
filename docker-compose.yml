@@ -1,10 +1,11 @@
 services:
+  # ── SERVICE 1: WEB APPLICATION (Frontend + Backend API) ──────────
   app:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: note_app_web
-    restart: always
+    restart: unless-stopped
     ports:
       - "8000:80"
     environment:
@@ -18,18 +19,24 @@ services:
       CACHE_STORE: redis
       SESSION_DRIVER: redis
       QUEUE_CONNECTION: redis
+      RUN_MIGRATIONS: "true"
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - .:/var/www/html
       - /var/www/html/vendor
       - /var/www/html/node_modules
+    networks:
+      - note_network
 
+  # ── SERVICE 2: DATABASE (PostgreSQL 15) ──────────────────────────
   db:
     image: postgres:15-alpine
     container_name: note_app_db
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_DB: note_db
       POSTGRES_USER: admin
@@ -38,18 +45,36 @@ services:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d note_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - note_network
 
+  # ── SERVICE 3: CACHE & SESSION STORE (Redis) ────────────────────
   redis:
     image: redis:alpine
     container_name: note_app_redis
-    restart: always
+    restart: unless-stopped
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - note_network
 
+  # ── SERVICE 4: WEBSOCKET SERVER (Real-time Collaboration) ───────
   websocket:
     build: .
     container_name: note_app_ws
-    restart: always
+    restart: unless-stopped
     environment:
       DB_CONNECTION: pgsql
       DB_HOST: db
@@ -59,10 +84,20 @@ services:
       DB_PASSWORD: password123
       REDIS_HOST: redis
     depends_on:
-      - app
+      app:
+        condition: service_started
     entrypoint: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
     ports:
       - "8080:8080"
+    networks:
+      - note_network
 
+# ── PERSISTENT VOLUMES ────────────────────────────────────────────
 volumes:
   postgres_data:
+  redis_data:
+
+# ── ISOLATED NETWORK ─────────────────────────────────────────────
+networks:
+  note_network:
+    driver: bridge
