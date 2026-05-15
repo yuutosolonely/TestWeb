@@ -4,3 +4,7 @@ node_modules
 public/storage
 storage/*.key
 .env
+# Prevent local framework cache from leaking into the image.
+# These files reference dev-only ServiceProviders (e.g. laravel/pail)
+# that are NOT installed when composer runs with --no-dev.
+bootstrap/cache/*.php
