@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use App\Mail\ActivationMail;
 use App\Mail\ResetPasswordMail;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller
@@ -64,11 +65,13 @@ class AuthController extends Controller
             'is_activated'     => false,
         ]);
 
-        try {
-            Mail::to($user->email)->send(new ActivationMail($user, $token));
-        } catch (\Exception $e) { /* Mail lỗi vẫn cho tạo tài khoản */ }
+        $mailSent = $this->sendMail($user->email, new ActivationMail($user, $token), 'activation');
 
-        return redirect()->route('auth.login')->with('success', 'Đăng ký thành công! Kiểm tra email để kích hoạt.');
+        $message = $mailSent
+            ? 'Đăng ký thành công! Kiểm tra email để kích hoạt.'
+            : 'Đăng ký thành công! Không gửi được email kích hoạt — kiểm tra cấu hình SMTP hoặc thử lại sau.';
+
+        return redirect()->route('auth.login')->with($mailSent ? 'success' : 'warning', $message);
     }
 
     public function activate(Request $request)
@@ -96,9 +99,7 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->first();
         $user->update(['reset_token' => $otp, 'reset_expires' => now()->addMinutes(15)]);
 
-        try {
-            Mail::to($user->email)->send(new ResetPasswordMail($user, $otp));
-        } catch (\Exception $e) {}
+        $this->sendMail($user->email, new ResetPasswordMail($user, $otp), 'password_reset');
 
         return redirect()->route('auth.reset')->with('reset_email', $request->email);
     }
@@ -136,5 +137,28 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         return redirect()->route('auth.login');
+    }
+
+    private function sendMail(string $to, $mailable, string $context): bool
+    {
+        if (config('mail.default') === 'log' && ! filled(env('MAIL_USERNAME'))) {
+            Log::warning("Mail skipped ({$context}): MAIL_MAILER=log and no SMTP credentials configured.", ['to' => $to]);
+
+            return false;
+        }
+
+        try {
+            Mail::to($to)->send($mailable);
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::error("Mail failed ({$context})", [
+                'to'      => $to,
+                'mailer'  => config('mail.default'),
+                'message' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
     }
 }

@@ -39,14 +39,25 @@ return [
 
         'smtp' => [
             'transport' => 'smtp',
-            'scheme' => env('MAIL_SCHEME'),
             'url' => env('MAIL_URL'),
             'host' => env('MAIL_HOST', '127.0.0.1'),
-            'port' => env('MAIL_PORT', 2525),
+            'port' => (int) env('MAIL_PORT', 587),
             'username' => env('MAIL_USERNAME'),
             'password' => env('MAIL_PASSWORD'),
             'timeout' => null,
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
+            // Laravel 12: MAIL_SCHEME (smtp|smtps|null). MAIL_ENCRYPTION kept for older .env files.
+            'scheme' => value(function () {
+                $scheme = env('MAIL_SCHEME');
+                if (filled($scheme) && ! in_array(strtolower((string) $scheme), ['null'], true)) {
+                    return $scheme;
+                }
+
+                return match (strtolower((string) env('MAIL_ENCRYPTION', ''))) {
+                    'ssl' => 'smtps',
+                    default => null,
+                };
+            }),
         ],
 
         'ses' => [

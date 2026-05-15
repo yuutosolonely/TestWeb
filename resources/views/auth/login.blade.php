@@ -14,6 +14,9 @@
             @if(session('success'))
                 <div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>{{ session('success') }}</div>
             @endif
+            @if(session('warning'))
+                <div class="alert alert-warning"><i class="bi bi-exclamation-triangle me-2"></i>{{ session('warning') }}</div>
+            @endif
 
             <form method="POST" action="{{ route('auth.login.post') }}">
                 @csrf
