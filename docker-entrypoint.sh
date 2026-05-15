@@ -1,8 +1,6 @@
 #!/bin/bash
 echo "🚀 Docker Entrypoint script starting..."
 
-# DO NOT use set -e — we handle errors manually to ensure Apache always starts.
-
 # Railway injects PORT dynamically; Apache must listen on it.
 APP_PORT="${PORT:-80}"
 echo "🌐 Configuring Apache to listen on port ${APP_PORT}"
@@ -32,46 +30,13 @@ else
     echo "✅ APP_KEY already set in environment"
 fi
 
-# Disable Pail in config/app.php for production (it's dev-only)
-if grep -q 'Laravel.*Pail.*PailServiceProvider' config/app.php 2>/dev/null; then
-    echo "🔧 Removing Pail ServiceProvider (dev-only) from config/app.php..."
-    sed -i "/Laravel.*Pail.*PailServiceProvider/d" config/app.php || true
-fi
-
-# Run migrations only when explicitly enabled.
-if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
-    echo "🗄️ RUN_MIGRATIONS=true → waiting for database..."
-    # Wait for database to be ready (max 30 seconds)
-    DB_READY=false
-    for i in $(seq 1 30); do
-        if php artisan migrate:status > /dev/null 2>&1; then
-            DB_READY=true
-            echo "✅ Database is ready!"
-            break
-        fi
-        echo "⏳ Waiting for database... ($i/30)"
-        sleep 1
-    done
-
-    if [ "$DB_READY" = "true" ]; then
-        echo "🔄 Running migrations..."
-        php artisan migrate --force || echo "⚠️ Migration had issues"
-        echo "🌱 Seeding demo data..."
-        php artisan db:seed --force || echo "⚠️ Seeding skipped (maybe already seeded)"
-    else
-        echo "❌ Database not ready after 30s, skipping migrations"
-    fi
-else
-    echo "⏭️ Skipping migrations (set RUN_MIGRATIONS=true to enable)"
-fi
-
 # Ensure locale directory exists
 mkdir -p resources/lang/en
 
 # Create storage link
 php artisan storage:link --force 2>/dev/null || true
 
-# Clear any cached config to ensure Railway env vars take effect
+# Clear caches
 php artisan config:clear 2>/dev/null || true
 php artisan route:clear 2>/dev/null || true
 php artisan cache:clear 2>/dev/null || true
@@ -87,4 +52,6 @@ echo "🔍 Testing Apache config..."
 apache2ctl -t 2>/dev/null || true
 
 echo "✅ Entrypoint complete! Starting Apache on port ${APP_PORT}..."
-exec "$@"
+
+# Start Apache in foreground
+exec apache2-foreground
