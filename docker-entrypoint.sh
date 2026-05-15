@@ -22,7 +22,14 @@ fi
 if [ ! -f ".env" ]; then
     echo "📄 Creating .env from .env.example..."
     cp .env.example .env
+fi
+
+# Generate key only if APP_KEY is not already set in environment
+if [ -z "$APP_KEY" ]; then
+    echo "🔑 Generating APP_KEY..."
     php artisan key:generate || echo "⚠️ Key generation skipped"
+else
+    echo "✅ APP_KEY already set in environment"
 fi
 
 # Disable Pail in config/app.php for production (it's dev-only)
