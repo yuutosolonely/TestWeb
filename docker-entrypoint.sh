@@ -15,7 +15,7 @@ echo "ServerName localhost" >> /etc/apache2/apache2.conf
 # Install composer dependencies if autoload.php doesn't exist
 if [ ! -f "vendor/autoload.php" ]; then
     echo "📦 Installing composer dependencies..."
-    composer install --no-interaction --optimize-autoloader || echo "⚠️ Composer install had issues"
+    composer install --no-interaction --optimize-autoloader --no-dev || echo "⚠️ Composer install had issues"
 fi
 
 # Create .env if it doesn't exist
@@ -23,6 +23,12 @@ if [ ! -f ".env" ]; then
     echo "📄 Creating .env from .env.example..."
     cp .env.example .env
     php artisan key:generate || echo "⚠️ Key generation skipped"
+fi
+
+# Disable Pail in config/app.php for production (it's dev-only)
+if grep -q 'Laravel.*Pail.*PailServiceProvider' config/app.php 2>/dev/null; then
+    echo "🔧 Removing Pail ServiceProvider (dev-only) from config/app.php..."
+    sed -i "/Laravel.*Pail.*PailServiceProvider/d" config/app.php || true
 fi
 
 # Run migrations only when explicitly enabled.
@@ -58,6 +64,7 @@ php artisan storage:link --force 2>/dev/null || true
 # Clear any cached config to ensure Railway env vars take effect
 php artisan config:clear 2>/dev/null || true
 php artisan route:clear 2>/dev/null || true
+php artisan cache:clear 2>/dev/null || true
 
 # mod_php requires mpm_prefork. Ensure only one MPM is active.
 for _mpm in mpm_event mpm_worker; do

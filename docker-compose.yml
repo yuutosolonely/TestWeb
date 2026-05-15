@@ -83,6 +83,7 @@ services:
       DB_USERNAME: admin
       DB_PASSWORD: password123
       REDIS_HOST: redis
+      COMPOSER_NO_DEV: "1"
     depends_on:
       app:
         condition: service_started
