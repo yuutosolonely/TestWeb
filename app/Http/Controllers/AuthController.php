@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 use App\Mail\ActivationMail;
 use App\Mail\ResetPasswordMail;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -66,7 +67,10 @@ class AuthController extends Controller
 
         try {
             Mail::to($user->email)->send(new ActivationMail($user, $token));
-        } catch (\Exception $e) { /* Mail lỗi vẫn cho tạo tài khoản */ }
+        } catch (\Exception $e) {
+            Log::error('Gửi email kích hoạt thất bại: ' . $e->getMessage(), ['user_id' => $user->id]);
+            /* Mail lỗi vẫn cho tạo tài khoản */
+        }
 
         return redirect()->route('auth.login')->with('success', 'Đăng ký thành công! Kiểm tra email để kích hoạt.');
     }
@@ -98,7 +102,9 @@ class AuthController extends Controller
 
         try {
             Mail::to($user->email)->send(new ResetPasswordMail($user, $otp));
-        } catch (\Exception $e) {}
+        } catch (\Exception $e) {
+            Log::error('Gửi email reset mật khẩu thất bại: ' . $e->getMessage(), ['email' => $user->email]);
+        }
 
         return redirect()->route('auth.reset')->with('reset_email', $request->email);
     }

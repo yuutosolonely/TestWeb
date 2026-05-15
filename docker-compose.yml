@@ -20,6 +20,15 @@ services:
       SESSION_DRIVER: redis
       QUEUE_CONNECTION: redis
       RUN_MIGRATIONS: "true"
+      # ── MAIL (Gmail SMTP) ──────────────────────────────────────────
+      MAIL_MAILER: smtp
+      MAIL_HOST: smtp.gmail.com
+      MAIL_PORT: 587
+      MAIL_SCHEME: tls
+      MAIL_USERNAME: ngodangtronghieu9a10@gmail.com
+      MAIL_PASSWORD: "zxoa jrfk lair bzjm"
+      MAIL_FROM_ADDRESS: ngodangtronghieu9a10@gmail.com
+      MAIL_FROM_NAME: "NoteApp"
     depends_on:
       db:
         condition: service_healthy
