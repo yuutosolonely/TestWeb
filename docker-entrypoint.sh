@@ -68,5 +68,9 @@ a2enmod mpm_prefork 2>/dev/null || true
 echo "🔍 Testing Apache config..."
 apache2ctl -t 2>/dev/null || true
 
+# Fix permissions again after running artisan commands as root
+echo "🔒 Fixing permissions for www-data..."
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
+
 echo "✅ Entrypoint complete! Starting Apache on port ${APP_PORT}..."
 exec "$@"

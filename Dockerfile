@@ -18,6 +18,8 @@ RUN apt-get update && apt-get install -y \
     && (a2dismod mpm_worker 2>/dev/null || true) \
     && a2enmod mpm_prefork \
     && a2enmod rewrite \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
 # 2. CÀI ĐẶT COMPOSER
@@ -28,12 +30,14 @@ WORKDIR /var/www/html
 COPY . .
 ENV COMPOSER_ALLOW_SUPERUSER=1
 RUN composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
+RUN npm install && npm run build
 
 # 4. PHÂN QUYỀN CHO THƯ MỤC STORAGE VÀ CACHE
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
 # 5. TRỎ APACHE DOCUMENT_ROOT VÀO THƯ MỤC PUBLIC CỦA LARAVEL
-RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
+RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf \
+    && sed -i 's|<Directory /var/www/>|<Directory /var/www/>\n    AllowOverride All|g' /etc/apache2/apache2.conf
 
 # 6. MỞ PORT 80
 EXPOSE 80
