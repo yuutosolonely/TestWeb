@@ -69,7 +69,8 @@ class AuthController extends Controller
             Mail::to($user->email)->send(new ActivationMail($user, $token));
         } catch (\Exception $e) {
             Log::error('Gửi email kích hoạt thất bại: ' . $e->getMessage(), ['user_id' => $user->id]);
-            /* Mail lỗi vẫn cho tạo tài khoản */
+            return redirect()->route('auth.login')
+                ->with('warning', 'Tài khoản đã tạo nhưng gửi email kích hoạt thất bại. Vui lòng liên hệ admin.');
         }
 
         return redirect()->route('auth.login')->with('success', 'Đăng ký thành công! Kiểm tra email để kích hoạt.');
@@ -104,6 +105,7 @@ class AuthController extends Controller
             Mail::to($user->email)->send(new ResetPasswordMail($user, $otp));
         } catch (\Exception $e) {
             Log::error('Gửi email reset mật khẩu thất bại: ' . $e->getMessage(), ['email' => $user->email]);
+            return back()->withErrors(['email' => 'Gửi email thất bại. Vui lòng thử lại sau.']);
         }
 
         return redirect()->route('auth.reset')->with('reset_email', $request->email);

@@ -406,5 +406,3 @@ note-app-final-hoan-thien/
 - [Laravel Reverb](https://laravel.com/docs/reverb)
 
 ---
-
-*Midterm project — Topic 10: Containerization & Orchestration. For detailed Docker study notes (Vietnamese), see `HUONG_DAN_DOCKER_CHI_TIET.md`.*
