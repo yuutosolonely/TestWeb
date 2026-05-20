@@ -154,10 +154,10 @@ return [
         ],
 
         'default' => [
-            'host' => env('REDIS_HOST', '127.0.0.1'),
+            'host' => env('REDIS_HOST', env('REDISHOST', '127.0.0.1')),
             'username' => env('REDIS_USERNAME', null),
-            'password' => env('REDIS_PASSWORD', null),
-            'port' => (int) env('REDIS_PORT', 6379),
+            'password' => env('REDIS_PASSWORD', env('REDISPASSWORD', null)),
+            'port' => (int) env('REDIS_PORT', env('REDISPORT', 6379)),
             'database' => env('REDIS_DB', '0'),
             'timeout' => 2.0,
             'read_timeout' => 2.0,
@@ -168,10 +168,10 @@ return [
         ],
 
         'cache' => [
-            'host' => env('REDIS_HOST', '127.0.0.1'),
+            'host' => env('REDIS_HOST', env('REDISHOST', '127.0.0.1')),
             'username' => env('REDIS_USERNAME', null),
-            'password' => env('REDIS_PASSWORD', null),
-            'port' => (int) env('REDIS_PORT', 6379),
+            'password' => env('REDIS_PASSWORD', env('REDISPASSWORD', null)),
+            'port' => (int) env('REDIS_PORT', env('REDISPORT', 6379)),
             'database' => env('REDIS_CACHE_DB', '1'),
             'timeout' => 2.0,
             'read_timeout' => 2.0,
