@@ -6,8 +6,15 @@ echo "🚀 Docker Entrypoint script starting..."
 # Railway injects PORT dynamically; Apache must listen on it.
 APP_PORT="${PORT:-80}"
 echo "🌐 Configuring Apache to listen on port ${APP_PORT}"
-sed -ri "s/^Listen [0-9]+/Listen ${APP_PORT}/" /etc/apache2/ports.conf
-sed -ri "s/<VirtualHost \*:[0-9]+>/<VirtualHost *:${APP_PORT}>/" /etc/apache2/sites-available/000-default.conf
+echo "Listen ${APP_PORT}" > /etc/apache2/ports.conf
+cat <<EOF > /etc/apache2/sites-available/000-default.conf
+<VirtualHost *:${APP_PORT}>
+    ServerAdmin webmaster@localhost
+    DocumentRoot /var/www/html/public
+    ErrorLog \${APACHE_LOG_DIR}/error.log
+    CustomLog \${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
+EOF
 
 # Suppress AH00558 warning
 echo "ServerName localhost" >> /etc/apache2/apache2.conf

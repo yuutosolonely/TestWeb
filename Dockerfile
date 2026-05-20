@@ -39,8 +39,7 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf \
     && sed -i 's|<Directory /var/www/>|<Directory /var/www/>\n    AllowOverride All|g' /etc/apache2/apache2.conf
 
-# 6. MỞ PORT 80
-EXPOSE 80
+# 6. (BỎ EXPOSE 80 ĐỂ RAILWAY TỰ ĐỘNG CẤP PHÁT PORT)
 
 # 7. COPY VÀ PHÂN QUYỀN CHẠY ENTRYPOINT SCRIPT
 COPY docker-entrypoint.sh /usr/local/bin/
