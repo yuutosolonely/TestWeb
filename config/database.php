@@ -154,6 +154,7 @@ return [
         ],
 
         'default' => [
+            'url' => env('REDIS_URL'),
             'host' => env('REDIS_HOST', env('REDISHOST', '127.0.0.1')),
             'username' => env('REDIS_USERNAME', null),
             'password' => env('REDIS_PASSWORD', env('REDISPASSWORD', null)),
@@ -168,6 +169,7 @@ return [
         ],
 
         'cache' => [
+            'url' => env('REDIS_URL'),
             'host' => env('REDIS_HOST', env('REDISHOST', '127.0.0.1')),
             'username' => env('REDIS_USERNAME', null),
             'password' => env('REDIS_PASSWORD', env('REDISPASSWORD', null)),
